@@ -1,7 +1,8 @@
 # Secure Zero-Trust File Drop System
+
 ## CSE 4057 — Spring 2026 Programming Assignment
 
----
+\---
 
 ## Kurulum / Setup
 
@@ -12,54 +13,59 @@ pip install -r requirements.txt
 ## Çalıştırma / Running
 
 **Terminal 1 — CA:**
+
 ```bash
 python ca/ca.py
 ```
 
 **Terminal 2 — Server:**
+
 ```bash
 python server/server.py
 ```
 
 **Terminal 3+ — Clients:**
+
 ```bash
 python client/client.py register alice
 python client/client.py register bob
 python client/client.py upload   alice bob /path/to/file.txt
 python client/client.py list     bob
-python client/client.py download bob <file_id>
-python client/client.py revoke   alice <file_id>
+python client/client.py download bob <file\_id>
+python client/client.py revoke   alice <file\_id>
 ```
 
 **Tam Otomatik Demo / Full automated demo:**
+
 ```bash
 python demo.py
 ```
 
----
+\---
 
 ## System Design
 
 ### Components
 
-| Component | Role |
-|-----------|------|
-| **CA** (`ca/ca.py`) | Certificate Authority — issues and signs X.509 certificates |
-| **Server** (`server/server.py`) | Zero-trust relay — stores ciphertexts, enforces access control |
-| **Client** (`client/client.py`) | User agent — encrypts/decrypts files, manages identities |
-| **Common** (`common/`) | Shared crypto utilities and logger |
+|Component|Role|
+|-|-|
+|**CA** (`ca/ca.py`)|Certificate Authority — issues and signs X.509 certificates|
+|**Server** (`server/server.py`)|Zero-trust relay — stores ciphertexts, enforces access control|
+|**Client** (`client/client.py`)|User agent — encrypts/decrypts files, manages identities|
+|**Common** (`common/`)|Shared crypto utilities and logger|
 
 ### Directory Structure
+
 ```
 secure-filedrop/
 ├── ca/
 │   ├── ca.py                  # CA server
-│   ├── ca_private_key.pem     # (generated on first run)
-│   └── ca_cert.pem            # (generated on first run)
+│   ├── ca\_private\_key.pem     # (generated on first run)
+│   └── ca\_cert.pem            # (generated on first run)
 ├── server/
 │   ├── server.py              # Server main
-│   ├── server_private_key.pem # (generated on first run)
-│   ├── server_cert.pem        # (generated on first run)
+│   ├── server\_private\_key.pem # (generated on first run)
+│   ├── server\_cert.pem        # (generated on first run)
 │   ├── storage/               # Encrypted file packages (JSON)
 │   ├── db/filedrop.db         # SQLite metadata
 │   └── logs/SERVER.log
@@ -67,52 +73,53 @@ secure-filedrop/
 │   ├── client.py              # Client CLI
 │   ├── identities/<user>/     # Per-user keys and certs
 │   ├── downloads/             # Decrypted downloaded files
-│   └── logs/CLIENT-*.log
+│   └── logs/CLIENT-\*.log
 ├── common/
-│   ├── crypto_utils.py        # All cryptographic primitives
+│   ├── crypto\_utils.py        # All cryptographic primitives
 │   └── logger.py              # Structured logging
 ├── demo.py                    # End-to-end demo
 └── requirements.txt
 ```
 
----
+\---
 
 ## Protocol Design
 
-### 1. Certificate Authority Protocol
+### 1\. Certificate Authority Protocol
 
 **CSR Request (plaintext TCP, pre-trust phase):**
+
 ```
-Client → CA:  RAW_JSON { csr: <PEM>, identity: <str> }
-CA → Client:  RAW_JSON { certificate: <PEM>, ca_cert: <PEM> }
+Client → CA:  RAW\_JSON { csr: <PEM>, identity: <str> }
+CA → Client:  RAW\_JSON { certificate: <PEM>, ca\_cert: <PEM> }
 ```
 
 All messages prefixed with a 4-byte big-endian length header.
 
-### 2. Client–Server Handshake
+### 2\. Client–Server Handshake
 
 The handshake establishes **mutual authentication** and a **shared session key** without relying on SSL/TLS.
 
 ```
 Client                              Server
   |                                   |
-  |<── RAW_JSON(cert_s, nonce_s) ─────|  (1) Server HELLO
-  |─── RAW_JSON(cert_c, nonce_c) ────>|  (2) Client HELLO
+  |<── RAW\_JSON(cert\_s, nonce\_s) ─────|  (1) Server HELLO
+  |─── RAW\_JSON(cert\_c, nonce\_c) ────>|  (2) Client HELLO
   |                                   |
-  |      [Both verify peer certificate against CA]
+  |      \[Both verify peer certificate against CA]
   |                                   |
-  |<── RAW_JSON(sign(nonce_c)) ───────|  (3) Server AUTH proof
-  |─── RAW_JSON(sign(nonce_s)) ──────>|  (4) Client AUTH proof
+  |<── RAW\_JSON(sign(nonce\_c)) ───────|  (3) Server AUTH proof
+  |─── RAW\_JSON(sign(nonce\_s)) ──────>|  (4) Client AUTH proof
   |                                   |
-  |      [Both verify proof-of-possession]
+  |      \[Both verify proof-of-possession]
   |                                   |
-  |<── RAW_JSON(ecdh_pub_s) ──────────|  (5) Server ECDH public key
-  |─── RAW_JSON(ecdh_pub_c) ─────────>|  (6) Client ECDH public key
+  |<── RAW\_JSON(ecdh\_pub\_s) ──────────|  (5) Server ECDH public key
+  |─── RAW\_JSON(ecdh\_pub\_c) ─────────>|  (6) Client ECDH public key
   |                                   |
-  |      [Both compute ECDH shared secret]
-  |      [Both derive session keys via HKDF]
+  |      \[Both compute ECDH shared secret]
+  |      \[Both derive session keys via HKDF]
   |                                   |
-  |<── RAW_JSON(handshake_complete) ──|  (7) Confirmation
+  |<── RAW\_JSON(handshake\_complete) ──|  (7) Confirmation
   |                                   |
   |====== Encrypted session active ===|
 ```
@@ -120,92 +127,98 @@ Client                              Server
 **Proof-of-possession:** Each side signs the *other side's nonce* with their RSA private key.  
 Verification uses the peer's certificate public key. A valid signature proves private key possession.
 
-### 3. Session Key Derivation (HKDF)
+### 3\. Session Key Derivation (HKDF)
 
 ```python
-key_material = HKDF(
+key\_material = HKDF(
     algorithm = SHA-256,
     length    = 64 bytes,
-    salt      = nonce_client || nonce_server,
+    salt      = nonce\_client || nonce\_server,
     info      = b"secure-filedrop-session-v1"
-).derive(ecdh_shared_secret)
+).derive(ecdh\_shared\_secret)
 
-c2s_key = key_material[0:32]   # client encrypts → server decrypts
-s2c_key = key_material[32:64]  # server encrypts → client decrypts
+c2s\_key = key\_material\[0:32]   # client encrypts → server decrypts
+s2c\_key = key\_material\[32:64]  # server encrypts → client decrypts
 ```
 
-### 4. Message Framing (Post-Handshake)
+### 4\. Message Framing (Post-Handshake)
 
 All messages are AES-256-GCM encrypted:
+
 ```
-[4-byte length][12-byte nonce][AES-GCM ciphertext]
+\[4-byte length]\[12-byte nonce]\[AES-GCM ciphertext]
 ```
+
 Plaintext (before encryption):
+
 ```json
 { "type": "...", "seq": 1, "timestamp": 1234567890.0, "payload": { ... } }
 ```
 
-### 5. File Upload Protocol
+### 5\. File Upload Protocol
 
 ```
-Client → Server: UPLOAD_REQUEST {
-    file_id, sender_id, recipient_id, filename,
-    upload_time, expiration_time, file_hash,
-    signature, request_nonce, sender_cert,
-    encrypted_package: { nonce, ciphertext, encrypted_key }
+Client → Server: UPLOAD\_REQUEST {
+    file\_id, sender\_id, recipient\_id, filename,
+    upload\_time, expiration\_time, file\_hash,
+    signature, request\_nonce, sender\_cert,
+    encrypted\_package: { nonce, ciphertext, encrypted\_key }
 }
-Server → Client: ACK { file_id, status: "stored" }
+Server → Client: ACK { file\_id, status: "stored" }
                  or ERROR { message }
 ```
 
 **Server verifications on upload:**
-1. `request_nonce` freshness (replay protection).
-2. `sender_id` matches authenticated identity.
+
+1. `request\_nonce` freshness (replay protection).
+2. `sender\_id` matches authenticated identity.
 3. Sender certificate valid against CA.
-4. Digital signature over `sender|recipient|file_id|hash|ts|expiry`.
-5. `file_hash` matches SHA-256 of the ciphertext.
+4. Digital signature over `sender|recipient|file\_id|hash|ts|expiry`.
+5. `file\_hash` matches SHA-256 of the ciphertext.
 
-### 6. File Encryption (End-to-End)
+### 6\. File Encryption (End-to-End)
 
 ```
-file_key  ← random 256-bit key
+file\_key  ← random 256-bit key
 nonce     ← random 96-bit (12 bytes)
-ciphertext ← AES-256-GCM(file_key, nonce, plaintext)
-wrapped_key ← RSA-OAEP-SHA256(recipient_pub_key, file_key)
+ciphertext ← AES-256-GCM(file\_key, nonce, plaintext)
+wrapped\_key ← RSA-OAEP-SHA256(recipient\_pub\_key, file\_key)
 
-uploaded_package = { nonce, ciphertext, encrypted_key: wrapped_key }
+uploaded\_package = { nonce, ciphertext, encrypted\_key: wrapped\_key }
 ```
 
-The server **never** sees `file_key` or the plaintext. Only the recipient's RSA private key can unwrap `file_key`.
+The server **never** sees `file\_key` or the plaintext. Only the recipient's RSA private key can unwrap `file\_key`.
 
-### 7. Digital Signature
+### 7\. Digital Signature
 
 **Signed payload (canonical string):**
+
 ```
-sender_id | recipient_id | file_id | file_hash | timestamp | expiration_time
+sender\_id | recipient\_id | file\_id | file\_hash | timestamp | expiration\_time
 ```
 
 **Algorithm:** RSA-PSS with SHA-256, MGF1.
 
 **When verified:**
-- Server verifies on upload (authenticity + integrity before storage).
-- Recipient verifies on download (origin authentication).
 
-### 8. File Retrieval Protocol
+* Server verifies on upload (authenticity + integrity before storage).
+* Recipient verifies on download (origin authentication).
+
+### 8\. File Retrieval Protocol
 
 ```
-Client → Server: DOWNLOAD_REQUEST { file_id, request_nonce }
-Server → Client: ACK { encrypted_package, signature, sender_id, file_hash, expiration_time }
+Client → Server: DOWNLOAD\_REQUEST { file\_id, request\_nonce }
+Server → Client: ACK { encrypted\_package, signature, sender\_id, file\_hash, expiration\_time }
                  or ERROR { message }
 
 Client-side post-download:
-  1. Decrypt file_key with own RSA private key (RSA-OAEP).
+  1. Decrypt file\_key with own RSA private key (RSA-OAEP).
   2. Decrypt file with AES-256-GCM.
-  3. Verify SHA-256 of ciphertext == server-reported file_hash.
+  3. Verify SHA-256 of ciphertext == server-reported file\_hash.
   4. Verify sender digital signature.
 ```
 
----
+\---
 
 ## Security Features
 
@@ -213,84 +226,88 @@ Client-side post-download:
 
 Replay attacks are prevented at two layers:
 
-| Layer | Mechanism |
-|-------|-----------|
-| Handshake | Fresh random nonces in each HELLO; proof signs the *peer's* nonce, making replays trivially detectable. |
-| Application | Every UPLOAD/DOWNLOAD/REVOKE includes a `request_nonce`. The server stores all seen nonces in SQLite (`used_nonces` table) and rejects duplicates. Nonces older than 1 hour are purged. |
+|Layer|Mechanism|
+|-|-|
+|Handshake|Fresh random nonces in each HELLO; proof signs the *peer's* nonce, making replays trivially detectable.|
+|Application|Every UPLOAD/DOWNLOAD/REVOKE includes a `request\_nonce`. The server stores all seen nonces in SQLite (`used\_nonces` table) and rejects duplicates. Nonces older than 1 hour are purged.|
 
 ### Access Control
 
-- File metadata includes `recipient_id`.
-- On download, server checks `authenticated_client_id == recipient_id`.
-- Mismatches are logged as unauthorized access attempts and rejected.
+* File metadata includes `recipient\_id`.
+* On download, server checks `authenticated\_client\_id == recipient\_id`.
+* Mismatches are logged as unauthorized access attempts and rejected.
 
 ### File Expiration
 
-- `expiration_time` (Unix timestamp) is set by sender at upload.
-- Server checks `expiration_time < now` before every download.
-- Expired files are marked `status = 'expired'` and excluded from `LIST_FILES`.
-- Expiration events are logged.
+* `expiration\_time` (Unix timestamp) is set by sender at upload.
+* Server checks `expiration\_time < now` before every download.
+* Expired files are marked `status = 'expired'` and excluded from `LIST\_FILES`.
+* Expiration events are logged.
 
 ### Zero-Trust Storage
 
-- Server stores `encrypted_package` (ciphertext + AES nonce + RSA-wrapped key) in JSON files under `server/storage/`.
-- Server never possesses `file_key` (it is RSA-OAEP encrypted for the recipient).
-- Server never sees plaintext file contents.
+* Server stores `encrypted\_package` (ciphertext + AES nonce + RSA-wrapped key) in JSON files under `server/storage/`.
+* Server never possesses `file\_key` (it is RSA-OAEP encrypted for the recipient).
+* Server never sees plaintext file contents.
 
----
+\---
 
 ## Cryptographic Choices
 
-| Purpose | Algorithm |
-|---------|-----------|
-| Long-term identity keys | RSA-2048 |
-| Key exchange | ECDH over P-256 (secp256r1) |
-| Key derivation | HKDF-SHA256 |
-| Session encryption | AES-256-GCM |
-| File encryption | AES-256-GCM (random per-file key) |
-| File key wrapping | RSA-OAEP-SHA256 |
-| Digital signatures | RSA-PSS-SHA256 |
-| Certificate signing | X.509 v3, SHA256WithRSAEncryption |
-| Integrity hashing | SHA-256 |
+|Purpose|Algorithm|
+|-|-|
+|Long-term identity keys|RSA-2048|
+|Key exchange|ECDH over P-256 (secp256r1)|
+|Key derivation|HKDF-SHA256|
+|Session encryption|AES-256-GCM|
+|File encryption|AES-256-GCM (random per-file key)|
+|File key wrapping|RSA-OAEP-SHA256|
+|Digital signatures|RSA-PSS-SHA256|
+|Certificate signing|X.509 v3, SHA256WithRSAEncryption|
+|Integrity hashing|SHA-256|
 
----
+\---
 
 ## Bonus Features Implemented
 
-### 1. Revocation Before Download ✓
-- Sender sends `REVOKE_REQUEST { file_id, request_nonce }`.
-- Server checks sender_id matches authenticated user and file status is `pending`.
-- File status updated to `revoked`; ciphertext deleted from disk.
-- Any subsequent download attempt receives `file_status_revoked` error.
-- Revocation events are logged.
+### 1\. Revocation Before Download ✓
 
-### 2. One-Time Download ✓
-- On successful download, server updates status to `downloaded`.
-- Subsequent download attempts receive `file_status_downloaded` error.
-- A download is only counted as "successful" when the server sends the ACK (i.e., the full package is delivered). Interrupted connections before ACK do not consume the file (the status update happens at send-time, which is an acceptable design tradeoff documented here).
+* Sender sends `REVOKE\_REQUEST { file\_id, request\_nonce }`.
+* Server checks sender\_id matches authenticated user and file status is `pending`.
+* File status updated to `revoked`; ciphertext deleted from disk.
+* Any subsequent download attempt receives `file\_status\_revoked` error.
+* Revocation events are logged.
 
----
+### 2\. One-Time Download ✓
+
+* On successful download, server updates status to `downloaded`.
+* Subsequent download attempts receive `file\_status\_downloaded` error.
+* A download is only counted as "successful" when the server sends the ACK (i.e., the full package is delivered). Interrupted connections before ACK do not consume the file (the status update happens at send-time, which is an acceptable design tradeoff documented here).
+
+\---
 
 ## Logging
 
 Log files are written to:
-- `ca/logs/CA.log`
-- `server/logs/SERVER.log`
-- `client/logs/CLIENT-<username>.log`
+
+* `ca/logs/CA.log`
+* `server/logs/SERVER.log`
+* `client/logs/CLIENT-<username>.log`
 
 **Events logged (with timestamps):**
-- Certificate issuance and verification results
-- Handshake start, authentication success/failure
-- Upload: storage confirmation, signature failures, hash mismatches
-- Download: success, access denied, expiration, revoked status
-- Replay detection
-- Revocation events
+
+* Certificate issuance and verification results
+* Handshake start, authentication success/failure
+* Upload: storage confirmation, signature failures, hash mismatches
+* Download: success, access denied, expiration, revoked status
+* Replay detection
+* Revocation events
 
 **Not logged:** Private keys, plaintext file contents, decrypted session keys.
 
----
+\---
 
-## Security Analysis & Limitations
+## Security Analysis \& Limitations
 
 ### Possible Vulnerabilities
 
@@ -300,7 +317,7 @@ Log files are written to:
 *Residual risk:* CA private key compromise would undermine all trust.
 
 **2. CA Private Key Compromise**  
-*Scenario:* Attacker obtains `ca/ca_private_key.pem` and issues fraudulent certificates.  
+*Scenario:* Attacker obtains `ca/ca\_private\_key.pem` and issues fraudulent certificates.  
 *Countermeasure:* In production, store CA key in an HSM; use an offline CA. Implement certificate revocation lists (CRL) or OCSP.
 
 **3. Weak Randomness**  
@@ -308,16 +325,16 @@ Log files are written to:
 *Mitigation:* Python's `os.urandom()` is backed by the OS CSPRNG (e.g., `/dev/urandom` on Linux). Acceptable for this context.
 
 **4. Replay of Encrypted Session Messages**  
-*Scenario:* An attacker records and replays an encrypted `DOWNLOAD_REQUEST`.  
-*Mitigation:* Each request includes a fresh `request_nonce`. The server stores and deduplicates nonces. The one-time download feature also prevents replayed downloads.  
+*Scenario:* An attacker records and replays an encrypted `DOWNLOAD\_REQUEST`.  
+*Mitigation:* Each request includes a fresh `request\_nonce`. The server stores and deduplicates nonces. The one-time download feature also prevents replayed downloads.  
 *Residual risk:* Nonce table is in-memory-bounded to 1 hour; nonces valid within that window are safely rejected.
 
 **5. Metadata Leakage**  
-*Scenario:* Server knows `sender_id`, `recipient_id`, `filename`, `upload_time`, `expiration_time`.  
+*Scenario:* Server knows `sender\_id`, `recipient\_id`, `filename`, `upload\_time`, `expiration\_time`.  
 *Note:* This is unavoidable for routing/access-control purposes. Sensitive fields (filename, description) could be encrypted client-side as a bonus feature (not fully implemented).
 
 **6. Timing Attacks on Signature Verification**  
-*Scenario:* An attacker uses timing differences during `verify_signature` to learn information.  
+*Scenario:* An attacker uses timing differences during `verify\_signature` to learn information.  
 *Mitigation:* Python's `cryptography` library uses constant-time comparisons for signature verification internally.
 
 **7. Log File Leakage**  
@@ -328,23 +345,20 @@ Log files are written to:
 *Scenario:* Two simultaneous download requests from the same client could both succeed before the status update.  
 *Mitigation:* In this implementation, SQLite provides serialized writes. A production system should use `SELECT FOR UPDATE` or a distributed lock.
 
----
+\---
 
 ## Division of Labor
 
-*(Fill in for group submission)*
+|Member|Implemented|
+|-|-|
+|Muhammed Furkan Atak |CA, PKI, certificate issuance, Expiration|
+|Cihat Emre Vardiş|Handshake, ECDH, HKDF, session keys, revocation|
+|Ömer Can Şimşek|File encryption, upload, download, access control, logging|
 
-| Member | Implemented |
-|--------|-------------|
-| — | CA, PKI, certificate issuance |
-| — | Handshake, ECDH, HKDF, session keys |
-| — | File encryption, upload, download, access control |
-| — | Expiration, revocation, logging, README, demo |
-
-**Communication:** Used [describe: Discord/WhatsApp/etc.]  
+**Communication: Send message to** https://www.linkedin.com/in/furkanatak/  
 **Integration:** Developed on separate branches, merged via pull requests with code review.
 
----
+\---
 
 ## How to Run Tests
 
@@ -367,5 +381,6 @@ python client/client.py register alice
 python client/client.py register bob
 python client/client.py upload alice bob /tmp/test.txt
 python client/client.py list bob
-python client/client.py download bob <file_id_from_list>
+python client/client.py download bob <file\_id\_from\_list>
 ```
+
