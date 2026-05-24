@@ -1,0 +1,18 @@
+2026-05-24 14:14:28 [INFO] [CLIENT-alice] Generating RSA-2048 key pair for 'alice' …
+2026-05-24 14:14:28 [INFO] [CLIENT-alice] Registration complete for 'alice'.
+2026-05-24 14:14:28 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:28 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:28 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:14:28 [INFO] [CLIENT-alice] Upload success: file_id=257ed5530b33ad35f2cf9ed2745f223c recipient=bob
+2026-05-24 14:14:29 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:29 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:29 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:14:29 [INFO] [CLIENT-alice] Upload success: file_id=b494f4b5e7699d359f7c9ba9f4c25c41 recipient=bob
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] Upload success: file_id=4894d92f62b1aae16c82cf4205187a2c recipient=bob
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:14:31 [INFO] [CLIENT-alice] File '4894d92f62b1aae16c82cf4205187a2c' revoked by 'alice'

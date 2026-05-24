@@ -1,0 +1,5 @@
+2026-05-24 14:14:28 [INFO] [CLIENT-eve] Generating RSA-2048 key pair for 'eve' …
+2026-05-24 14:14:28 [INFO] [CLIENT-eve] Registration complete for 'eve'.
+2026-05-24 14:14:29 [INFO] [CLIENT-eve] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:29 [INFO] [CLIENT-eve] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:29 [INFO] [CLIENT-eve] HANDSHAKE: Session established with server.

@@ -1,0 +1,71 @@
+2026-05-24 14:14:28 [INFO] [SERVER] Generating server RSA-2048 key pair …
+2026-05-24 14:14:28 [INFO] [SERVER] Requesting certificate from CA …
+2026-05-24 14:14:28 [INFO] [SERVER] Server certificate obtained and saved.
+2026-05-24 14:14:28 [INFO] [SERVER] Server listening on 127.0.0.1:9001
+2026-05-24 14:14:28 [INFO] [SERVER] Connection from ('127.0.0.1', 52851)
+2026-05-24 14:14:28 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'alice'
+2026-05-24 14:14:28 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'alice'
+2026-05-24 14:14:28 [INFO] [SERVER] HANDSHAKE: Session keys established with 'alice'
+2026-05-24 14:14:28 [INFO] [SERVER] UPLOAD: File '257ed5530b33ad35f2cf9ed2745f223c' stored from 'alice' for 'bob'
+2026-05-24 14:14:28 [INFO] [SERVER] Connection closed for 'alice'
+2026-05-24 14:14:28 [INFO] [SERVER] Connection from ('127.0.0.1', 52852)
+2026-05-24 14:14:28 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'bob'
+2026-05-24 14:14:28 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'bob'
+2026-05-24 14:14:28 [INFO] [SERVER] HANDSHAKE: Session keys established with 'bob'
+2026-05-24 14:14:28 [INFO] [SERVER] LIST: 'bob' has 1 pending file(s)
+2026-05-24 14:14:28 [INFO] [SERVER] Connection closed for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] Connection from ('127.0.0.1', 52853)
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Session keys established with 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] LIST: 'bob' has 1 pending file(s)
+2026-05-24 14:14:29 [INFO] [SERVER] Connection closed for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] Connection from ('127.0.0.1', 52854)
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Session keys established with 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] DOWNLOAD: File '257ed5530b33ad35f2cf9ed2745f223c' sent to 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] Connection closed for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] Connection from ('127.0.0.1', 52855)
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'eve'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'eve'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Session keys established with 'eve'
+2026-05-24 14:14:29 [WARNING] [SERVER] DOWNLOAD: UNAUTHORIZED access to '257ed5530b33ad35f2cf9ed2745f223c' by 'eve' (intended: 'bob')
+2026-05-24 14:14:29 [INFO] [SERVER] Connection closed for 'eve'
+2026-05-24 14:14:29 [INFO] [SERVER] Connection from ('127.0.0.1', 52856)
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'alice'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'alice'
+2026-05-24 14:14:29 [INFO] [SERVER] HANDSHAKE: Session keys established with 'alice'
+2026-05-24 14:14:29 [INFO] [SERVER] UPLOAD: File 'b494f4b5e7699d359f7c9ba9f4c25c41' stored from 'alice' for 'bob'
+2026-05-24 14:14:29 [INFO] [SERVER] Connection closed for 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] Connection from ('127.0.0.1', 52857)
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Session keys established with 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] LIST: File 'b494f4b5e7699d359f7c9ba9f4c25c41' is expired, marking expired
+2026-05-24 14:14:31 [INFO] [SERVER] LIST: 'bob' has 0 pending file(s)
+2026-05-24 14:14:31 [INFO] [SERVER] Connection closed for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] Connection from ('127.0.0.1', 52858)
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Session keys established with 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] UPLOAD: File '4894d92f62b1aae16c82cf4205187a2c' stored from 'alice' for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] Connection closed for 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] Connection from ('127.0.0.1', 52859)
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Session keys established with 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] LIST: 'bob' has 1 pending file(s)
+2026-05-24 14:14:31 [INFO] [SERVER] Connection closed for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] Connection from ('127.0.0.1', 52860)
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Session keys established with 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] REVOKE: File '4894d92f62b1aae16c82cf4205187a2c' revoked by sender 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] Connection closed for 'alice'
+2026-05-24 14:14:31 [INFO] [SERVER] Connection from ('127.0.0.1', 52861)
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Client cert verified for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Mutual authentication SUCCESS for 'bob'
+2026-05-24 14:14:31 [INFO] [SERVER] HANDSHAKE: Session keys established with 'bob'
+2026-05-24 14:14:31 [WARNING] [SERVER] DOWNLOAD: File '4894d92f62b1aae16c82cf4205187a2c' status is 'revoked', not available
+2026-05-24 14:14:31 [INFO] [SERVER] Connection closed for 'bob'

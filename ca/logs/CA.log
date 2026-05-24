@@ -1,0 +1,18 @@
+2026-05-24 14:14:27 [INFO] [CA] Generating new CA RSA-2048 key pair …
+2026-05-24 14:14:27 [INFO] [CA] CA private key saved to C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_private_key.pem
+2026-05-24 14:14:27 [INFO] [CA] Creating self-signed CA certificate …
+2026-05-24 14:14:27 [INFO] [CA] CA certificate saved to C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_cert.pem
+2026-05-24 14:14:27 [INFO] [CA] CA initialized. Subject: O=SecureFileDrop,CN=SecureFileDrop-CA
+2026-05-24 14:14:27 [INFO] [CA] CA listening on 127.0.0.1:9000
+2026-05-24 14:14:28 [INFO] [CA] CSR request from ('127.0.0.1', 52847)
+2026-05-24 14:14:28 [INFO] [CA] Issued certificate for identity 'server'
+2026-05-24 14:14:28 [INFO] [CA] Certificate sent to ('127.0.0.1', 52847) for identity 'server'
+2026-05-24 14:14:28 [INFO] [CA] CSR request from ('127.0.0.1', 52848)
+2026-05-24 14:14:28 [INFO] [CA] Issued certificate for identity 'alice'
+2026-05-24 14:14:28 [INFO] [CA] Certificate sent to ('127.0.0.1', 52848) for identity 'alice'
+2026-05-24 14:14:28 [INFO] [CA] CSR request from ('127.0.0.1', 52849)
+2026-05-24 14:14:28 [INFO] [CA] Issued certificate for identity 'bob'
+2026-05-24 14:14:28 [INFO] [CA] Certificate sent to ('127.0.0.1', 52849) for identity 'bob'
+2026-05-24 14:14:28 [INFO] [CA] CSR request from ('127.0.0.1', 52850)
+2026-05-24 14:14:28 [INFO] [CA] Issued certificate for identity 'eve'
+2026-05-24 14:14:28 [INFO] [CA] Certificate sent to ('127.0.0.1', 52850) for identity 'eve'

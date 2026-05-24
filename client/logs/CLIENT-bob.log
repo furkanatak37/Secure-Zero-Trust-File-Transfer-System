@@ -1,0 +1,23 @@
+2026-05-24 14:14:28 [INFO] [CLIENT-bob] Generating RSA-2048 key pair for 'bob' …
+2026-05-24 14:14:28 [INFO] [CLIENT-bob] Registration complete for 'bob'.
+2026-05-24 14:14:28 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:28 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:28 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:14:28 [INFO] [CLIENT-bob] Listed 1 pending file(s)
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] Signature verified for file_id=257ed5530b33ad35f2cf9ed2745f223c from 'alice'
+2026-05-24 14:14:29 [INFO] [CLIENT-bob] File '257ed5530b33ad35f2cf9ed2745f223c' downloaded successfully by 'bob'
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
