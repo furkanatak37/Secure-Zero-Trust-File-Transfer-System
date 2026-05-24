@@ -49,6 +49,7 @@ from common.crypto_utils import (
     ecdh_shared_secret, derive_session_keys,
     generate_nonce, generate_file_id, sha256_hash,
     build_signature_payload,
+    verify_recipient_ack,
     send_message, recv_message, send_raw, recv_raw
 )
 from common.logger import get_logger
@@ -79,17 +80,32 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS files (
-            file_id         TEXT PRIMARY KEY,
-            sender_id       TEXT NOT NULL,
-            recipient_id    TEXT NOT NULL,
-            filename        TEXT NOT NULL,
-            upload_time     REAL NOT NULL,
-            expiration_time REAL NOT NULL,
-            status          TEXT NOT NULL DEFAULT 'pending',
-            file_hash       TEXT NOT NULL,
-            signature       TEXT NOT NULL
+            file_id                 TEXT PRIMARY KEY,
+            sender_id              TEXT NOT NULL,
+            recipient_id           TEXT NOT NULL,
+            filename               TEXT NOT NULL,
+            upload_time            REAL NOT NULL,
+            expiration_time        REAL NOT NULL,
+            status                 TEXT NOT NULL DEFAULT 'pending',
+            file_hash              TEXT NOT NULL,
+            signature              TEXT NOT NULL,
+            confidential_metadata  TEXT,
+            encrypted_note         TEXT,
+            ack_timestamp          REAL,
+            ack_signature          TEXT
         )
     """)
+    # Migration: add columns if they don't exist (for existing DBs)
+    for col, coldef in [
+        ("confidential_metadata", "TEXT"),
+        ("encrypted_note", "TEXT"),
+        ("ack_timestamp", "REAL"),
+        ("ack_signature", "TEXT"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE files ADD COLUMN {col} {coldef}")
+        except Exception:
+            pass
     conn.execute("""
         CREATE TABLE IF NOT EXISTS used_nonces (
             nonce TEXT PRIMARY KEY,
@@ -105,12 +121,15 @@ def db_insert_file(meta: dict):
     conn.execute("""
         INSERT INTO files
             (file_id, sender_id, recipient_id, filename, upload_time,
-             expiration_time, status, file_hash, signature)
-        VALUES (?,?,?,?,?,?,?,?,?)
+             expiration_time, status, file_hash, signature,
+             confidential_metadata, encrypted_note)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
     """, (
         meta["file_id"], meta["sender_id"], meta["recipient_id"],
         meta["filename"], meta["upload_time"], meta["expiration_time"],
-        "pending", meta["file_hash"], meta["signature"]
+        "pending", meta["file_hash"], meta["signature"],
+        meta.get("confidential_metadata"),
+        meta.get("encrypted_note")
     ))
     conn.commit()
     conn.close()
@@ -137,6 +156,17 @@ def db_list_pending(recipient_id: str):
 def db_update_status(file_id: str, status: str):
     conn = sqlite3.connect(DB_FILE)
     conn.execute("UPDATE files SET status=? WHERE file_id=?", (status, file_id))
+    conn.commit()
+    conn.close()
+
+
+def db_store_ack(file_id: str, ack_timestamp: float, ack_signature: str):
+    """Store a verified recipient acknowledgement against a file record."""
+    conn = sqlite3.connect(DB_FILE)
+    conn.execute(
+        "UPDATE files SET ack_timestamp=?, ack_signature=? WHERE file_id=?",
+        (ack_timestamp, ack_signature, file_id)
+    )
     conn.commit()
     conn.close()
 
@@ -353,6 +383,8 @@ class ClientHandler:
                     self._handle_download(payload)
                 elif msg_type == "REVOKE_REQUEST":
                     self._handle_revoke(payload)
+                elif msg_type == "RECIPIENT_ACK":
+                    self._handle_recipient_ack(payload)
                 else:
                     self._send("ERROR", {"message": "unknown_message_type"})
 
@@ -413,8 +445,13 @@ class ClientHandler:
                 return
 
             # Verify file hash matches the encrypted ciphertext hash
-            ciphertext_bytes = bytes.fromhex(encrypted_package["ciphertext"])
-            actual_hash = sha256_hash(ciphertext_bytes)
+            # Bonus 4: chunked packages use manifest_hash instead of ciphertext hash
+            encrypted_package = payload["encrypted_package"]
+            if encrypted_package.get("chunked"):
+                actual_hash = encrypted_package.get("manifest_hash", "")
+            else:
+                ciphertext_bytes = bytes.fromhex(encrypted_package["ciphertext"])
+                actual_hash = sha256_hash(ciphertext_bytes)
             if actual_hash != file_hash:
                 logger.warning("UPLOAD: File hash mismatch for file '%s'", file_id)
                 self._send("ERROR", {"message": "hash_mismatch"})
@@ -425,6 +462,16 @@ class ClientHandler:
             with open(package_path, "w") as f:
                 json.dump(encrypted_package, f)
 
+            # Bonus 3: store confidential metadata blob (opaque to server)
+            conf_meta_json = None
+            if "confidential_metadata" in payload:
+                conf_meta_json = json.dumps(payload["confidential_metadata"])
+
+            # Bonus 6: store encrypted note blob (opaque to server)
+            enc_note_json = None
+            if "encrypted_note" in payload:
+                enc_note_json = json.dumps(payload["encrypted_note"])
+
             # Persist metadata
             db_insert_file({
                 "file_id": file_id,
@@ -434,7 +481,9 @@ class ClientHandler:
                 "upload_time": upload_time,
                 "expiration_time": expiration,
                 "file_hash": file_hash,
-                "signature": signature
+                "signature": signature,
+                "confidential_metadata": conf_meta_json,
+                "encrypted_note": enc_note_json
             })
 
             logger.info("UPLOAD: File '%s' stored from '%s' for '%s'",
@@ -519,7 +568,7 @@ class ClientHandler:
         db_update_status(file_id, "downloaded")
         logger.info("DOWNLOAD: File '%s' sent to '%s'", file_id, self.client_id)
 
-        self._send("ACK", {
+        resp_payload = {
             "file_id": file_id,
             "encrypted_package": encrypted_package,
             "signature": meta["signature"],
@@ -527,7 +576,15 @@ class ClientHandler:
             "file_hash": meta["file_hash"],
             "upload_time": meta["upload_time"],
             "expiration_time": meta["expiration_time"]
-        })
+        }
+        # Bonus 3: pass through encrypted confidential metadata (opaque blob)
+        if meta.get("confidential_metadata"):
+            resp_payload["confidential_metadata"] = json.loads(meta["confidential_metadata"])
+        # Bonus 6: pass through encrypted note (opaque blob)
+        if meta.get("encrypted_note"):
+            resp_payload["encrypted_note"] = json.loads(meta["encrypted_note"])
+
+        self._send("ACK", resp_payload)
 
     # ── Revoke ──────────────────────────────────────────────────────────────
 
@@ -564,6 +621,50 @@ class ClientHandler:
 
         logger.info("REVOKE: File '%s' revoked by sender '%s'", file_id, self.client_id)
         self._send("ACK", {"file_id": file_id, "status": "revoked"})
+
+    # ── Recipient Acknowledgement (Bonus 5) ─────────────────────────────────
+
+    def _handle_recipient_ack(self, payload):
+        """
+        Receive and verify a signed acknowledgement from the recipient
+        after successful download. ACK is bound to file_id + recipient_id + timestamp.
+        Only accepted from the intended recipient; signature is verified against
+        their CA-signed certificate obtained during handshake.
+        """
+        file_id = payload.get("file_id")
+        meta = db_get_file(file_id)
+        if not meta:
+            self._send("ERROR", {"message": "file_not_found"})
+            return
+
+        if meta["recipient_id"] != self.client_id:
+            logger.warning("ACK: UNAUTHORIZED ack for '%s' by '%s'", file_id, self.client_id)
+            self._send("ERROR", {"message": "access_denied"})
+            return
+
+        # Look up the recipient's cert from the identities directory (same-machine demo)
+        recipient_cert_path = os.path.join(
+            BASE_DIR, "..", "client", "identities",
+            self.client_id, "cert.pem"
+        )
+        if not os.path.exists(recipient_cert_path):
+            logger.warning("ACK: Recipient cert not found for '%s'", self.client_id)
+            self._send("ERROR", {"message": "recipient_cert_not_found"})
+            return
+
+        with open(recipient_cert_path, "rb") as f:
+            recipient_cert = load_cert(f.read())
+
+        if not verify_recipient_ack(payload, recipient_cert.public_key()):
+            logger.warning("ACK: Signature verification FAILED for file '%s' from '%s'",
+                           file_id, self.client_id)
+            self._send("ERROR", {"message": "ack_signature_invalid"})
+            return
+
+        db_store_ack(file_id, payload["ack_timestamp"], payload["signature"])
+        logger.info("ACK: Recipient '%s' acknowledged file '%s' at ts=%.2f",
+                    self.client_id, file_id, payload["ack_timestamp"])
+        self._send("ACK", {"file_id": file_id, "status": "ack_recorded"})
 
 
 # ─────────────────────────────────────────────────────────────────────────────

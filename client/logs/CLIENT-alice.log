@@ -16,3 +16,53 @@
 2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
 2026-05-24 14:14:31 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
 2026-05-24 14:14:31 [INFO] [CLIENT-alice] File '4894d92f62b1aae16c82cf4205187a2c' revoked by 'alice'
+2026-05-24 14:42:01 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:42:01 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:42:01 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:42:01 [ERROR] [CLIENT-alice] Upload failed: table files has no column named encrypted_meta
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] Upload success: file_id=bc3eb11b5a0a6c4708414a8438eea255 recipient=bob
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:43:04 [INFO] [CLIENT-alice] Upload success: file_id=e42760359fb4ce6f7f889fb5aa681518 recipient=bob
+2026-05-24 14:43:06 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:06 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:06 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:43:06 [INFO] [CLIENT-alice] Upload success: file_id=1083cddd241be83f2a72b63eee0b8f37 recipient=bob
+2026-05-24 14:43:06 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:06 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:06 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:43:07 [INFO] [CLIENT-alice] File '1083cddd241be83f2a72b63eee0b8f37' revoked by 'alice'
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] Upload success: file_id=57768db4228bf9607993777c5c90bec4 recipient=bob
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:54:31 [INFO] [CLIENT-alice] Upload success: file_id=c9663a2e72de5dccee1c895daf8ddc13 recipient=bob
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] Upload success: file_id=79eb97a9ae003725ebd9d3105f4195f9 recipient=bob
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] File '79eb97a9ae003725ebd9d3105f4195f9' revoked by 'alice'
+2026-05-24 14:54:33 [INFO] [CLIENT-alice] Upload: encrypted note attached for 'bob'
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] Upload success: file_id=57eb92fdfc2cebfab0258b7fbc687524 recipient=bob
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] Upload: using chunked mode (4 chunks)
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] Upload success: file_id=9b8766bf95ace94b5f7977dc1f60a3ee recipient=bob
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-alice] Upload success: file_id=c4317fa6c61aa8444124f6512ea7aee0 recipient=bob

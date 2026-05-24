@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  # Run the full automated demo (CA + Server + Clients in one process)
+  demo:
+    build: .
+    container_name: secure-filedrop-demo
+    command: python demo.py
+    volumes:
+      - filedrop-data:/app/server/storage
+      - filedrop-db:/app/server/db
+      - filedrop-logs:/app/server/logs
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
+  # Alternatively: run just the server (foreground, persists between client runs)
+  server:
+    build: .
+    container_name: secure-filedrop-server
+    command: python server/server.py
+    ports:
+      - "9001:9001"
+    volumes:
+      - filedrop-data:/app/server/storage
+      - filedrop-db:/app/server/db
+      - filedrop-logs:/app/server/logs
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    profiles:
+      - server-only
+
+volumes:
+  filedrop-data:
+  filedrop-db:
+  filedrop-logs:

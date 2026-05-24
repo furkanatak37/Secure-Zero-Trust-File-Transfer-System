@@ -293,3 +293,236 @@ def build_signature_payload(sender_id: str, recipient_id: str, file_id: str,
     """Build the canonical byte string that is signed for a file upload."""
     data = f"{sender_id}|{recipient_id}|{file_id}|{file_hash}|{timestamp}|{expiration}"
     return data.encode()
+
+
+# ─────────────────────────────────────────────
+# Encrypted Note (Bonus 6)
+# ─────────────────────────────────────────────
+
+def encrypt_note(note: str, recipient_public_key) -> dict:
+    """
+    Encrypt a short sender note for the recipient only.
+    Uses same AES-GCM + RSA-OAEP scheme as file encryption.
+    Returns a dict with nonce, ciphertext, encrypted_key (all hex).
+    """
+    note_key = os.urandom(32)
+    nonce, ciphertext = aes_gcm_encrypt(note_key, note.encode("utf-8"))
+    encrypted_key = recipient_public_key.encrypt(
+        note_key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return {
+        "nonce": nonce.hex(),
+        "ciphertext": ciphertext.hex(),
+        "encrypted_key": encrypted_key.hex()
+    }
+
+
+def decrypt_note(encrypted_note: dict, recipient_private_key) -> str:
+    """Decrypt an encrypted note using the recipient's private key."""
+    note_key = recipient_private_key.decrypt(
+        bytes.fromhex(encrypted_note["encrypted_key"]),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    nonce = bytes.fromhex(encrypted_note["nonce"])
+    ciphertext = bytes.fromhex(encrypted_note["ciphertext"])
+    return aes_gcm_decrypt(note_key, nonce, ciphertext).decode("utf-8")
+
+
+# ─────────────────────────────────────────────
+# Confidential Metadata (Bonus 3)
+# ─────────────────────────────────────────────
+
+def encrypt_metadata(metadata: dict, recipient_public_key) -> dict:
+    """
+    Encrypt non-routing metadata (e.g. filename, description) for the recipient.
+    Fields that must stay visible for routing (recipient_id, file_id, status)
+    are NOT included here — only sensitive optional fields.
+    Returns encrypted blob dict.
+    """
+    plaintext = json.dumps(metadata).encode("utf-8")
+    meta_key = os.urandom(32)
+    nonce, ciphertext = aes_gcm_encrypt(meta_key, plaintext)
+    encrypted_key = recipient_public_key.encrypt(
+        meta_key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return {
+        "nonce": nonce.hex(),
+        "ciphertext": ciphertext.hex(),
+        "encrypted_key": encrypted_key.hex()
+    }
+
+
+def decrypt_metadata(encrypted_meta: dict, recipient_private_key) -> dict:
+    """Decrypt confidential metadata blob using recipient's private key."""
+    meta_key = recipient_private_key.decrypt(
+        bytes.fromhex(encrypted_meta["encrypted_key"]),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    nonce = bytes.fromhex(encrypted_meta["nonce"])
+    ciphertext = bytes.fromhex(encrypted_meta["ciphertext"])
+    plaintext = aes_gcm_decrypt(meta_key, nonce, ciphertext)
+    return json.loads(plaintext.decode("utf-8"))
+
+
+# ─────────────────────────────────────────────
+# Large File Chunking (Bonus 4)
+# ─────────────────────────────────────────────
+
+CHUNK_SIZE = 64 * 1024  # 64 KB per chunk
+
+
+def split_into_chunks(file_data: bytes, chunk_size: int = CHUNK_SIZE) -> list:
+    """
+    Split file_data into fixed-size chunks.
+    Returns list of dicts: {chunk_index, total_chunks, data (bytes), chunk_hash}.
+    """
+    chunks = []
+    total = (len(file_data) + chunk_size - 1) // chunk_size
+    for i in range(total):
+        chunk_data = file_data[i * chunk_size: (i + 1) * chunk_size]
+        chunks.append({
+            "chunk_index": i,
+            "total_chunks": total,
+            "data": chunk_data,
+            "chunk_hash": hashlib.sha256(chunk_data).hexdigest()
+        })
+    return chunks
+
+
+def encrypt_chunks(file_data: bytes, recipient_public_key) -> dict:
+    """
+    Encrypt file as ordered chunks. Each chunk is individually AES-GCM encrypted
+    with the same file key. The file key is RSA-OAEP wrapped for the recipient.
+    Returns a dict suitable for JSON serialisation.
+    """
+    file_key = os.urandom(32)
+    chunks = split_into_chunks(file_data)
+    encrypted_chunks = []
+    for ch in chunks:
+        nonce, ciphertext = aes_gcm_encrypt(file_key, ch["data"])
+        encrypted_chunks.append({
+            "chunk_index": ch["chunk_index"],
+            "total_chunks": ch["total_chunks"],
+            "nonce": nonce.hex(),
+            "ciphertext": ciphertext.hex(),
+            "chunk_hash": ch["chunk_hash"]   # hash of plaintext chunk for integrity
+        })
+
+    encrypted_key = recipient_public_key.encrypt(
+        file_key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    # Also store a hash of all chunk hashes in order (manifest hash)
+    manifest = "|".join(c["chunk_hash"] for c in encrypted_chunks)
+    manifest_hash = hashlib.sha256(manifest.encode()).hexdigest()
+
+    return {
+        "chunked": True,
+        "total_chunks": len(chunks),
+        "manifest_hash": manifest_hash,
+        "encrypted_key": encrypted_key.hex(),
+        "chunks": encrypted_chunks
+    }
+
+
+def decrypt_chunks(chunked_package: dict, recipient_private_key) -> bytes:
+    """
+    Decrypt a chunked file package.
+    Verifies chunk ordering, per-chunk hashes, and manifest hash.
+    Raises ValueError on integrity failure.
+    """
+    file_key = recipient_private_key.decrypt(
+        bytes.fromhex(chunked_package["encrypted_key"]),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    chunks = chunked_package["chunks"]
+    total = chunked_package["total_chunks"]
+
+    # Sort by chunk_index to handle any reordering
+    chunks_sorted = sorted(chunks, key=lambda c: c["chunk_index"])
+
+    # Detect missing or duplicated chunks
+    indices = [c["chunk_index"] for c in chunks_sorted]
+    if indices != list(range(total)):
+        raise ValueError(f"Chunk sequence error: expected 0..{total-1}, got {indices}")
+
+    # Verify manifest hash
+    manifest = "|".join(c["chunk_hash"] for c in chunks_sorted)
+    if hashlib.sha256(manifest.encode()).hexdigest() != chunked_package["manifest_hash"]:
+        raise ValueError("Manifest hash mismatch — chunks may be modified or reordered.")
+
+    reassembled = b""
+    for ch in chunks_sorted:
+        nonce = bytes.fromhex(ch["nonce"])
+        ciphertext = bytes.fromhex(ch["ciphertext"])
+        plaintext = aes_gcm_decrypt(file_key, nonce, ciphertext)
+        # Verify per-chunk plaintext hash
+        if hashlib.sha256(plaintext).hexdigest() != ch["chunk_hash"]:
+            raise ValueError(f"Chunk {ch['chunk_index']} integrity check failed.")
+        reassembled += plaintext
+
+    return reassembled
+
+
+# ─────────────────────────────────────────────
+# Recipient Acknowledgement (Bonus 5)
+# ─────────────────────────────────────────────
+
+def build_ack_payload(recipient_id: str, file_id: str, timestamp: float) -> bytes:
+    """Build the canonical bytes for a recipient acknowledgement signature."""
+    data = f"ACK|{recipient_id}|{file_id}|{timestamp}"
+    return data.encode()
+
+
+def sign_recipient_ack(private_key, file_id: str, recipient_id: str) -> dict:
+    """
+    Generate a signed acknowledgement after successful download+verification.
+    Returns a dict with ack_timestamp, recipient_id, file_id, signature (hex).
+    """
+    ack_ts = time.time()
+    payload = build_ack_payload(recipient_id, file_id, ack_ts)
+    signature = sign_data(private_key, payload)
+    return {
+        "recipient_id": recipient_id,
+        "file_id": file_id,
+        "ack_timestamp": ack_ts,
+        "signature": signature.hex()
+    }
+
+
+def verify_recipient_ack(ack: dict, recipient_public_key) -> bool:
+    """Verify a recipient acknowledgement signature. Returns True on success."""
+    try:
+        payload = build_ack_payload(
+            ack["recipient_id"], ack["file_id"], ack["ack_timestamp"]
+        )
+        sig = bytes.fromhex(ack["signature"])
+        return verify_signature(recipient_public_key, payload, sig)
+    except Exception:
+        return False

@@ -66,9 +66,9 @@ def register(username):
     cmd_register(username)
 
 
-def upload(sender, recipient, filepath, expires_hours=24):
+def upload(sender, recipient, filepath, expires_hours=24, note=None):
     from client.client import cmd_upload
-    cmd_upload(sender, recipient, filepath, expires_hours)
+    cmd_upload(sender, recipient, filepath, expires_hours, note=note)
 
 
 def list_files(username):
@@ -228,6 +228,68 @@ def main():
         if "revoked" in msg6 or "not_found" in msg6:
             print("  [OK] Revoked file correctly rejected.")
 
+    # ── Step 10: Encrypted Note (Bonus 6) ────────────────────────────────────
+    section("STEP 10 — Encrypted Note (Bonus 6)")
+    sample4 = os.path.join(tempfile.gettempdir(), "noted_file.txt")
+    with open(sample4, "w") as f:
+        f.write("This file comes with a secret note!\n")
+
+    print("  alice uploads file with an encrypted note for bob …")
+    upload("alice", "bob", sample4, expires_hours=24,
+           note="Hi Bob! This note is end-to-end encrypted — server never sees it.")
+
+    session7 = SecureSession("bob")
+    session7.connect()
+    session7.send("LIST_FILES", {})
+    resp7 = session7.recv()
+    session7.close()
+    noted_files = resp7["payload"].get("files", [])
+    if noted_files:
+        noted_id = noted_files[0]["file_id"]
+        print(f"  bob downloads file with note (file_id={noted_id[:16]}…) …")
+        download("bob", noted_id)
+
+    # ── Step 11: Large File Chunking (Bonus 4) ───────────────────────────────
+    section("STEP 11 — Large File Chunking (Bonus 4)")
+    big_file = os.path.join(tempfile.gettempdir(), "large_file.bin")
+    with open(big_file, "wb") as f:
+        f.write(os.urandom(200 * 1024))   # 200 KB > 64 KB chunk threshold
+
+    print("  alice uploads a 200 KB file (auto-chunked into 3+ chunks) …")
+    upload("alice", "bob", big_file, expires_hours=24)
+
+    session8 = SecureSession("bob")
+    session8.connect()
+    session8.send("LIST_FILES", {})
+    resp8 = session8.recv()
+    session8.close()
+    chunked_files = resp8["payload"].get("files", [])
+    if chunked_files:
+        big_id = chunked_files[0]["file_id"]
+        print(f"  bob downloads and reassembles chunked file …")
+        download("bob", big_id)
+
+    # ── Step 12: Confidential Metadata (Bonus 3) ─────────────────────────────
+    section("STEP 12 — Confidential Metadata (Bonus 3)")
+    secret_meta_file = os.path.join(tempfile.gettempdir(), "secret_doc.txt")
+    with open(secret_meta_file, "w") as f:
+        f.write("Sensitive document with confidential filename.\n")
+
+    print("  alice uploads file — real filename encrypted, server sees '[confidential]' …")
+    upload("alice", "bob", secret_meta_file, expires_hours=24)
+
+    session9 = SecureSession("bob")
+    session9.connect()
+    session9.send("LIST_FILES", {})
+    resp9 = session9.recv()
+    session9.close()
+    conf_files = resp9["payload"].get("files", [])
+    if conf_files:
+        conf_id = conf_files[0]["file_id"]
+        print(f"  Server-side filename: '[confidential]'")
+        print(f"  bob downloads and decrypts confidential metadata …")
+        download("bob", conf_id)
+
     # ── Final summary ─────────────────────────────────────────────────────────
     section("DEMO COMPLETE")
     print("""
@@ -244,6 +306,10 @@ All required features demonstrated:
   ✓ Event logging (check server/logs/ and client/logs/)
   ✓ File revocation (bonus)
   ✓ One-time download (bonus)
+  ✓ Encrypted notes — E2E (bonus)
+  ✓ Large file chunking with integrity (bonus)
+  ✓ Confidential metadata — filename hidden from server (bonus)
+  ✓ Signed recipient acknowledgement (bonus)
 
 Log files:
   ca/logs/CA.log

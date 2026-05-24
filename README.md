@@ -30,9 +30,19 @@ python server/server.py
 python client/client.py register alice
 python client/client.py register bob
 python client/client.py upload   alice bob /path/to/file.txt
+python client/client.py upload   alice bob /path/to/file.txt --note "Secret note for bob"
+python client/client.py upload   alice bob /path/to/large.bin --chunks   # force chunked upload
 python client/client.py list     bob
 python client/client.py download bob <file\_id>
 python client/client.py revoke   alice <file\_id>
+```
+
+**Docker ile çalıştırma / Running with Docker:**
+
+```bash
+docker build -t secure-filedrop .
+docker run --rm secure-filedrop          # full demo
+docker compose up demo                   # docker-compose ile
 ```
 
 **Tam Otomatik Demo / Full automated demo:**
@@ -158,36 +168,78 @@ Plaintext (before encryption):
 ### 5\. File Upload Protocol
 
 ```
-Client → Server: UPLOAD\_REQUEST {
-    file\_id, sender\_id, recipient\_id, filename,
-    upload\_time, expiration\_time, file\_hash,
-    signature, request\_nonce, sender\_cert,
-    encrypted\_package: { nonce, ciphertext, encrypted\_key }
+Client → Server: UPLOAD_REQUEST {
+    file_id, sender_id, recipient_id,
+    filename: "[confidential]",            ← always masked (Bonus 3)
+    confidential_metadata: { nonce, ciphertext, encrypted_key },  ← encrypted filename/desc
+    upload_time, expiration_time, file_hash,
+    signature, request_nonce, sender_cert,
+    encrypted_package: { nonce, ciphertext, encrypted_key }
+                     | { chunked: true, total_chunks, manifest_hash,
+                         encrypted_key, chunks: [{chunk_index, total_chunks,
+                                                   nonce, ciphertext, chunk_hash}] },
+    encrypted_note: { nonce, ciphertext, encrypted_key }  ← optional (Bonus 6)
 }
-Server → Client: ACK { file\_id, status: "stored" }
+Server → Client: ACK { file_id, status: "stored" }
                  or ERROR { message }
 ```
 
 **Server verifications on upload:**
 
-1. `request\_nonce` freshness (replay protection).
-2. `sender\_id` matches authenticated identity.
+1. `request_nonce` freshness (replay protection).
+2. `sender_id` matches authenticated identity.
 3. Sender certificate valid against CA.
-4. Digital signature over `sender|recipient|file\_id|hash|ts|expiry`.
-5. `file\_hash` matches SHA-256 of the ciphertext.
+4. Digital signature over `sender|recipient|file_id|hash|ts|expiry`.
+5. For regular packages: `file_hash` == SHA-256 of ciphertext. For chunked: `file_hash` == `manifest_hash`.
 
 ### 6\. File Encryption (End-to-End)
 
+**Regular (< 64 KB):**
 ```
-file\_key  ← random 256-bit key
-nonce     ← random 96-bit (12 bytes)
-ciphertext ← AES-256-GCM(file\_key, nonce, plaintext)
-wrapped\_key ← RSA-OAEP-SHA256(recipient\_pub\_key, file\_key)
+file_key   ← random 256-bit key
+nonce      ← random 96-bit (12 bytes)
+ciphertext ← AES-256-GCM(file_key, nonce, plaintext)
+wrapped_key ← RSA-OAEP-SHA256(recipient_pub_key, file_key)
 
-uploaded\_package = { nonce, ciphertext, encrypted\_key: wrapped\_key }
+package = { nonce, ciphertext, encrypted_key: wrapped_key }
 ```
 
-The server **never** sees `file\_key` or the plaintext. Only the recipient's RSA private key can unwrap `file\_key`.
+**Chunked (≥ 64 KB, Bonus 4):**
+```
+file_key     ← random 256-bit key (shared across all chunks)
+wrapped_key  ← RSA-OAEP-SHA256(recipient_pub_key, file_key)
+
+for each chunk[i]:
+    nonce[i]      ← random 96-bit
+    ciphertext[i] ← AES-256-GCM(file_key, nonce[i], chunk_data[i])
+    chunk_hash[i] ← SHA-256(chunk_data[i])           ← plaintext chunk integrity
+
+manifest_hash ← SHA-256( chunk_hash[0] | chunk_hash[1] | ... )   ← ordering integrity
+file_hash     ← manifest_hash                         ← used in signature payload
+
+package = { chunked: true, total_chunks, manifest_hash, encrypted_key,
+            chunks: [{ chunk_index, nonce, ciphertext, chunk_hash }, ...] }
+```
+
+**Encrypted Note (Bonus 6):**
+```
+note_key    ← random 256-bit key
+enc_note    ← AES-256-GCM(note_key, nonce, note_bytes)
+wrapped_note_key ← RSA-OAEP-SHA256(recipient_pub_key, note_key)
+
+encrypted_note = { nonce, ciphertext, encrypted_key: wrapped_note_key }
+```
+
+**Confidential Metadata (Bonus 3):**
+```
+meta_key   ← random 256-bit key
+enc_meta   ← AES-256-GCM(meta_key, nonce, JSON({ filename, ... }))
+wrapped_meta_key ← RSA-OAEP-SHA256(recipient_pub_key, meta_key)
+
+confidential_metadata = { nonce, ciphertext, encrypted_key: wrapped_meta_key }
+```
+
+The server **never** sees `file_key`, plaintext contents, real filename, or note text. Only the recipient's RSA private key can unwrap any of these.
 
 ### 7\. Digital Signature
 
@@ -207,15 +259,29 @@ sender\_id | recipient\_id | file\_id | file\_hash | timestamp | expiration\_tim
 ### 8\. File Retrieval Protocol
 
 ```
-Client → Server: DOWNLOAD\_REQUEST { file\_id, request\_nonce }
-Server → Client: ACK { encrypted\_package, signature, sender\_id, file\_hash, expiration\_time }
+Client → Server: DOWNLOAD_REQUEST { file_id, request_nonce }
+Server → Client: ACK { encrypted_package, signature, sender_id, file_hash,
+                        upload_time, expiration_time,
+                        confidential_metadata,  ← optional (Bonus 3)
+                        encrypted_note }         ← optional (Bonus 6)
                  or ERROR { message }
 
 Client-side post-download:
-  1. Decrypt file\_key with own RSA private key (RSA-OAEP).
-  2. Decrypt file with AES-256-GCM.
-  3. Verify SHA-256 of ciphertext == server-reported file\_hash.
-  4. Verify sender digital signature.
+  1. Decrypt file_key with own RSA private key (RSA-OAEP).
+  2a. Regular: decrypt file with AES-256-GCM; verify SHA-256(ciphertext) == file_hash.
+  2b. Chunked: sort chunks → verify manifest_hash → decrypt each chunk →
+               verify chunk_hash → concatenate (Bonus 4).
+  3. Verify sender digital signature (RSA-PSS).
+  4. Decrypt confidential_metadata → recover real filename (Bonus 3).
+  5. Decrypt encrypted_note → display sender note (Bonus 6).
+  6. Send RECIPIENT_ACK in a new authenticated session (Bonus 5).
+
+Client → Server: RECIPIENT_ACK {
+    recipient_id, file_id, ack_timestamp,
+    signature = RSA-PSS(private_key, "ACK|recipient_id|file_id|ack_timestamp")
+}
+Server → Client: ACK { file_id, status: "ack_recorded" }
+                 or ERROR { message }
 ```
 
 \---
@@ -270,21 +336,67 @@ Replay attacks are prevented at two layers:
 
 ## Bonus Features Implemented
 
-### 1\. Revocation Before Download ✓
+### 1. Revocation Before Download ✓
 
-* Sender sends `REVOKE\_REQUEST { file\_id, request\_nonce }`.
-* Server checks sender\_id matches authenticated user and file status is `pending`.
+* Sender sends `REVOKE_REQUEST { file_id, request_nonce }`.
+* Server checks `sender_id` matches authenticated user and file status is `pending`.
 * File status updated to `revoked`; ciphertext deleted from disk.
-* Any subsequent download attempt receives `file\_status\_revoked` error.
+* Any subsequent download attempt receives `file_status_revoked` error.
 * Revocation events are logged.
 
-### 2\. One-Time Download ✓
+### 2. One-Time Download ✓
 
 * On successful download, server updates status to `downloaded`.
-* Subsequent download attempts receive `file\_status\_downloaded` error.
-* A download is only counted as "successful" when the server sends the ACK (i.e., the full package is delivered). Interrupted connections before ACK do not consume the file (the status update happens at send-time, which is an acceptable design tradeoff documented here).
+* Subsequent download attempts receive `file_status_downloaded` error.
+* A download is only counted as "successful" when the server sends the ACK (full package delivered). Interrupted connections before the ACK do not consume the file — the status update happens at send-time, which is an acceptable design tradeoff documented here.
 
-\---
+### 3. Confidential Metadata ✓
+
+* The real filename (and any optional description) is **encrypted client-side** before upload using the same AES-GCM + RSA-OAEP scheme used for file content.
+* The server stores only `filename = "[confidential]"` in its SQLite database — the actual filename is opaque to the server.
+* The encrypted blob (`confidential_metadata`) is stored with the file package and forwarded to the recipient on download.
+* Upon download, the recipient decrypts the blob with their private key to recover the original filename.
+* **Fields visible to server:** `file_id`, `sender_id`, `recipient_id`, `upload_time`, `expiration_time`, `status`, `file_hash`, `signature` (all required for routing/access control).
+* **Fields hidden from server:** `filename`, any future description fields.
+
+### 4. Large File Chunking ✓
+
+* Files larger than **64 KB** (configurable via `CHUNK_SIZE` in `crypto_utils.py`) are automatically split into fixed-size chunks.
+* Each chunk is individually AES-GCM encrypted with the same per-file key; the file key is RSA-OAEP wrapped once for the recipient.
+* Each chunk carries `chunk_index`, `total_chunks`, and `chunk_hash` (SHA-256 of the plaintext chunk).
+* A **manifest hash** (SHA-256 over all ordered chunk hashes) enables detection of missing, reordered, duplicated, or modified chunks.
+* On download, the receiver: (1) sorts by `chunk_index` and checks for gaps/duplicates; (2) verifies manifest hash; (3) decrypts each chunk and verifies its `chunk_hash`; (4) concatenates chunks to reconstruct the original file.
+
+### 5. Recipient Acknowledgement ✓
+
+* After successful download **and** signature verification, the client generates a signed ACK:  
+  `payload = "ACK|<recipient_id>|<file_id>|<ack_timestamp>"` signed with RSA-PSS.
+* The ACK is sent as a `RECIPIENT_ACK` message in a **new authenticated session** (full handshake), ensuring the ACK is tied to the authenticated identity.
+* The server verifies the ACK comes from the intended recipient and the signature is valid against their CA-signed certificate.
+* `ack_timestamp` and `ack_signature` are stored in the SQLite database for auditability.
+
+### 6. End-to-End Encrypted Notes ✓
+
+* The sender may attach a short note using `--note "text"` (CLI) or the `note=` parameter (API).
+* The note is AES-GCM encrypted with a fresh 256-bit key, which is RSA-OAEP wrapped for the recipient — the server cannot read it.
+* The encrypted note blob is stored by the server opaquely and forwarded together with the encrypted file, binding it to the same transfer context.
+* On download, the recipient decrypts the note with their private key and it is displayed.
+
+### 7. Containerized Deployment ✓
+
+* A `Dockerfile` (Python 3.12-slim base) is provided. Build and run:
+  ```bash
+  docker build -t secure-filedrop .
+  docker run --rm secure-filedrop        # runs the full demo
+  ```
+* A `docker-compose.yml` provides two modes:
+  - **`demo` service**: runs `demo.py` (CA + Server + Clients in one container, no ports needed).
+  - **`server` service** (profile `server-only`): persistent server with named volumes, accessible on port 9001.
+  ```bash
+  docker compose up demo
+  docker compose --profile server-only up server
+  ```
+* Named volumes (`filedrop-data`, `filedrop-db`, `filedrop-logs`) persist storage, database, and logs across container restarts.
 
 ## Logging
 
@@ -298,12 +410,16 @@ Log files are written to:
 
 * Certificate issuance and verification results
 * Handshake start, authentication success/failure
-* Upload: storage confirmation, signature failures, hash mismatches
-* Download: success, access denied, expiration, revoked status
-* Replay detection
+* Upload: storage confirmation, signature failures, hash mismatches, chunked mode info
+* Download: success, access denied, expiration, revoked/downloaded status
+* Confidential metadata decryption (Bonus 3)
+* Chunked reassembly info: chunk count (Bonus 4)
+* Recipient ACK: receipt, signature verification result, storage (Bonus 5)
+* Encrypted note decryption (Bonus 6)
+* Replay detection (nonce reuse)
 * Revocation events
 
-**Not logged:** Private keys, plaintext file contents, decrypted session keys.
+**Not logged:** Private keys, plaintext file contents, decrypted session keys, note contents, real filenames (server side).
 
 \---
 
@@ -331,7 +447,7 @@ Log files are written to:
 
 **5. Metadata Leakage**  
 *Scenario:* Server knows `sender\_id`, `recipient\_id`, `filename`, `upload\_time`, `expiration\_time`.  
-*Note:* This is unavoidable for routing/access-control purposes. Sensitive fields (filename, description) could be encrypted client-side as a bonus feature (not fully implemented).
+*Mitigation (implemented):* Sensitive fields (filename, description) are encrypted client-side as part of the Confidential Metadata bonus feature. The server only stores `"[confidential]"` as the filename. Fields required for routing (`recipient_id`, `file_id`, `status`) remain visible to the server as unavoidable.
 
 **6. Timing Attacks on Signature Verification**  
 *Scenario:* An attacker uses timing differences during `verify\_signature` to learn information.  

@@ -21,3 +21,98 @@
 2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
 2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
 2026-05-24 14:14:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:42:01 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:42:01 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:42:01 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:42:01 [INFO] [CLIENT-bob] Listed 0 pending file(s)
+2026-05-24 14:42:01 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:42:01 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:42:01 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] Listed 1 pending file(s)
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] Signature verified for file_id=bc3eb11b5a0a6c4708414a8438eea255 from 'alice'
+2026-05-24 14:43:04 [INFO] [CLIENT-bob] File 'bc3eb11b5a0a6c4708414a8438eea255' downloaded successfully by 'bob'
+2026-05-24 14:43:06 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:06 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:06 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:43:06 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:06 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:06 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:43:07 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:43:07 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:43:07 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] Listed 1 pending file(s)
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] Signature verified for file_id=57768db4228bf9607993777c5c90bec4 from 'alice'
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] Confidential metadata decrypted for file_id=57768db4228bf9607993777c5c90bec4
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] File '57768db4228bf9607993777c5c90bec4' downloaded successfully by 'bob'
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:31 [INFO] [CLIENT-bob] Recipient ACK sent for file_id=57768db4228bf9607993777c5c90bec4 by 'bob'
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:33 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Signature verified for file_id=57eb92fdfc2cebfab0258b7fbc687524 from 'alice'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Confidential metadata decrypted for file_id=57eb92fdfc2cebfab0258b7fbc687524
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] File '57eb92fdfc2cebfab0258b7fbc687524' downloaded successfully by 'bob'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Encrypted note decrypted for file_id=57eb92fdfc2cebfab0258b7fbc687524
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Recipient ACK sent for file_id=57eb92fdfc2cebfab0258b7fbc687524 by 'bob'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Download: chunked package (4 chunks)
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Signature verified for file_id=9b8766bf95ace94b5f7977dc1f60a3ee from 'alice'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Confidential metadata decrypted for file_id=9b8766bf95ace94b5f7977dc1f60a3ee
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] File '9b8766bf95ace94b5f7977dc1f60a3ee' downloaded successfully by 'bob'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Recipient ACK sent for file_id=9b8766bf95ace94b5f7977dc1f60a3ee by 'bob'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Signature verified for file_id=c4317fa6c61aa8444124f6512ea7aee0 from 'alice'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Confidential metadata decrypted for file_id=c4317fa6c61aa8444124f6512ea7aee0
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] File 'c4317fa6c61aa8444124f6512ea7aee0' downloaded successfully by 'bob'
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server cert verified.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Server authenticated.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] HANDSHAKE: Session established with server.
+2026-05-24 14:54:34 [INFO] [CLIENT-bob] Recipient ACK sent for file_id=c4317fa6c61aa8444124f6512ea7aee0 by 'bob'

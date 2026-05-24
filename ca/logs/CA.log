@@ -16,3 +16,15 @@
 2026-05-24 14:14:28 [INFO] [CA] CSR request from ('127.0.0.1', 52850)
 2026-05-24 14:14:28 [INFO] [CA] Issued certificate for identity 'eve'
 2026-05-24 14:14:28 [INFO] [CA] Certificate sent to ('127.0.0.1', 52850) for identity 'eve'
+2026-05-24 14:42:00 [INFO] [CA] Loading existing CA private key from C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_private_key.pem
+2026-05-24 14:42:00 [INFO] [CA] Loading existing CA certificate from C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_cert.pem
+2026-05-24 14:42:00 [INFO] [CA] CA initialized. Subject: O=SecureFileDrop,CN=SecureFileDrop-CA
+2026-05-24 14:42:00 [INFO] [CA] CA listening on 127.0.0.1:9000
+2026-05-24 14:43:03 [INFO] [CA] Loading existing CA private key from C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_private_key.pem
+2026-05-24 14:43:03 [INFO] [CA] Loading existing CA certificate from C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_cert.pem
+2026-05-24 14:43:03 [INFO] [CA] CA initialized. Subject: O=SecureFileDrop,CN=SecureFileDrop-CA
+2026-05-24 14:43:03 [INFO] [CA] CA listening on 127.0.0.1:9000
+2026-05-24 14:54:30 [INFO] [CA] Loading existing CA private key from C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_private_key.pem
+2026-05-24 14:54:30 [INFO] [CA] Loading existing CA certificate from C:\Users\furka\OneDrive\Masaüstü\secure-filedrop\ca\ca_cert.pem
+2026-05-24 14:54:30 [INFO] [CA] CA initialized. Subject: O=SecureFileDrop,CN=SecureFileDrop-CA
+2026-05-24 14:54:30 [INFO] [CA] CA listening on 127.0.0.1:9000

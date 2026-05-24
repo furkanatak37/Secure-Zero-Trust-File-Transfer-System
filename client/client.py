@@ -38,7 +38,12 @@ from common.crypto_utils import (
     generate_nonce, generate_file_id, sha256_hash,
     build_signature_payload,
     encrypt_file_for_recipient, decrypt_file,
-    send_message, recv_message, send_raw, recv_raw
+    encrypt_note, decrypt_note,
+    encrypt_metadata, decrypt_metadata,
+    encrypt_chunks, decrypt_chunks,
+    sign_recipient_ack, verify_recipient_ack,
+    send_message, recv_message, send_raw, recv_raw,
+    CHUNK_SIZE
 )
 from common.logger import get_logger
 from ca.ca import request_certificate
@@ -258,7 +263,7 @@ class SecureSession:
 # Upload
 # ─────────────────────────────────────────────────────────────────────────────
 
-def cmd_upload(username, recipient, filepath, expires_hours=24):
+def cmd_upload(username, recipient, filepath, expires_hours=24, note=None, use_chunks=False):
     logger = get_logger(f"CLIENT-{username}", LOG_DIR)
 
     if not os.path.exists(filepath):
@@ -277,9 +282,25 @@ def cmd_upload(username, recipient, filepath, expires_hours=24):
     expiration_time = upload_time + expires_hours * 3600
     request_nonce = generate_nonce().hex()
 
-    # Encrypt file for recipient
-    encrypted_package = encrypt_file_for_recipient(file_data, recipient_pub_key)
-    file_hash = sha256_hash(bytes.fromhex(encrypted_package["ciphertext"]))
+    # ── Bonus 4: Chunked or regular encryption ──────────────────────────────
+    if use_chunks or len(file_data) > CHUNK_SIZE:
+        encrypted_package = encrypt_chunks(file_data, recipient_pub_key)
+        # For hash we use manifest_hash as the canonical ciphertext fingerprint
+        file_hash = encrypted_package["manifest_hash"]
+        logger.info("Upload: using chunked mode (%d chunks)", encrypted_package["total_chunks"])
+    else:
+        encrypted_package = encrypt_file_for_recipient(file_data, recipient_pub_key)
+        file_hash = sha256_hash(bytes.fromhex(encrypted_package["ciphertext"]))
+
+    # ── Bonus 6: Encrypted note ─────────────────────────────────────────────
+    encrypted_note = None
+    if note:
+        encrypted_note = encrypt_note(note, recipient_pub_key)
+        logger.info("Upload: encrypted note attached for '%s'", recipient)
+
+    # ── Bonus 3: Confidential metadata ──────────────────────────────────────
+    # filename is sensitive — encrypt it so server sees only file_id
+    confidential = encrypt_metadata({"filename": filename}, recipient_pub_key)
 
     # Sign the file metadata
     private_key, cert, _ = load_identity(username)
@@ -295,7 +316,8 @@ def cmd_upload(username, recipient, filepath, expires_hours=24):
         "file_id": file_id,
         "sender_id": username,
         "recipient_id": recipient,
-        "filename": filename,
+        "filename": "[confidential]",      # Bonus 3: real filename is encrypted below
+        "confidential_metadata": confidential,
         "upload_time": upload_time,
         "expiration_time": expiration_time,
         "file_hash": file_hash,
@@ -304,6 +326,8 @@ def cmd_upload(username, recipient, filepath, expires_hours=24):
         "encrypted_package": encrypted_package,
         "sender_cert": serialize_cert(cert).decode()
     }
+    if encrypted_note:
+        payload["encrypted_note"] = encrypted_note
 
     session.send("UPLOAD_REQUEST", payload)
     response = session.recv()
@@ -311,6 +335,10 @@ def cmd_upload(username, recipient, filepath, expires_hours=24):
 
     if response and response.get("type") == "ACK":
         print(f"[OK] File uploaded. file_id = {file_id}")
+        if use_chunks or len(file_data) > CHUNK_SIZE:
+            print(f"     Sent in {encrypted_package['total_chunks']} chunk(s).")
+        if note:
+            print(f"     Encrypted note attached.")
         logger.info("Upload success: file_id=%s recipient=%s", file_id, recipient)
     else:
         err = response.get("payload", {}).get("message", "unknown") if response else "no response"
@@ -359,9 +387,9 @@ def cmd_download(username, file_id):
     session.connect()
     session.send("DOWNLOAD_REQUEST", {"file_id": file_id, "request_nonce": request_nonce})
     response = session.recv()
-    session.close()
 
     if not response or response.get("type") != "ACK":
+        session.close()
         err = response.get("payload", {}).get("message", "?") if response else "no response"
         print(f"[ERROR] Download failed: {err}")
         logger.error("Download failed for file_id=%s: %s", file_id, err)
@@ -373,18 +401,27 @@ def cmd_download(username, file_id):
     sender_id = payload["sender_id"]
     file_hash = payload["file_hash"]
     expiration = payload["expiration_time"]
+    encrypted_note = payload.get("encrypted_note")
+    confidential_meta = payload.get("confidential_metadata")
 
-    # Decrypt the file
+    # ── Bonus 4: Chunked or regular decryption ──────────────────────────────
     try:
-        file_data = decrypt_file(encrypted_package, private_key)
+        if encrypted_package.get("chunked"):
+            logger.info("Download: chunked package (%d chunks)", encrypted_package["total_chunks"])
+            file_data = decrypt_chunks(encrypted_package, private_key)
+            actual_hash = encrypted_package["manifest_hash"]
+        else:
+            file_data = decrypt_file(encrypted_package, private_key)
+            actual_hash = sha256_hash(bytes.fromhex(encrypted_package["ciphertext"]))
     except Exception as e:
+        session.close()
         print(f"[ERROR] Decryption failed: {e}")
         logger.error("Decryption failed for file_id=%s: %s", file_id, e)
         return
 
-    # Verify integrity: hash of ciphertext
-    actual_hash = sha256_hash(bytes.fromhex(encrypted_package["ciphertext"]))
+    # Verify integrity
     if actual_hash != file_hash:
+        session.close()
         print("[ERROR] File hash mismatch — file may be tampered!")
         logger.error("Hash mismatch on download for file_id=%s", file_id)
         return
@@ -395,8 +432,8 @@ def cmd_download(username, file_id):
         sender_id, username, file_id, file_hash,
         upload_time, expiration
     )
-    # Load sender cert to verify signature
     sender_cert_path = cert_file(sender_id)
+    sig_ok = False
     if not os.path.exists(sender_cert_path):
         print(f"[WARN] Cannot find sender '{sender_id}' certificate for signature verification.")
         logger.warning("Sender cert not found for '%s'", sender_id)
@@ -405,20 +442,58 @@ def cmd_download(username, file_id):
             sender_cert = load_cert(f.read())
         sig_bytes = bytes.fromhex(signature_hex)
         if not verify_signature(sender_cert.public_key(), sig_payload, sig_bytes):
+            session.close()
             print("[ERROR] Sender signature verification FAILED — rejecting file!")
             logger.error("Signature verification FAILED for file_id=%s from '%s'",
                          file_id, sender_id)
             return
+        sig_ok = True
         print(f"[OK] Signature verified — file is from '{sender_id}'.")
         logger.info("Signature verified for file_id=%s from '%s'", file_id, sender_id)
+
+    # ── Bonus 3: Decrypt confidential metadata ──────────────────────────────
+    real_filename = file_id + "_decrypted"
+    if confidential_meta:
+        try:
+            meta = decrypt_metadata(confidential_meta, private_key)
+            real_filename = meta.get("filename", real_filename)
+            print(f"[OK] Confidential metadata decrypted — filename: '{real_filename}'")
+            logger.info("Confidential metadata decrypted for file_id=%s", file_id)
+        except Exception as e:
+            logger.warning("Could not decrypt confidential metadata: %s", e)
 
     # Save decrypted file
     out_path = os.path.join(DOWNLOAD_DIR, file_id + "_decrypted")
     with open(out_path, "wb") as f:
         f.write(file_data)
-
     print(f"[OK] File downloaded and decrypted → {out_path}")
     logger.info("File '%s' downloaded successfully by '%s'", file_id, username)
+
+    # ── Bonus 6: Decrypt note ────────────────────────────────────────────────
+    if encrypted_note:
+        try:
+            note_text = decrypt_note(encrypted_note, private_key)
+            print(f"[NOTE] Sender's note: {note_text}")
+            logger.info("Encrypted note decrypted for file_id=%s", file_id)
+        except Exception as e:
+            print(f"[WARN] Could not decrypt note: {e}")
+            logger.warning("Note decryption failed for file_id=%s: %s", file_id, e)
+
+    # ── Bonus 5: Recipient Acknowledgement ───────────────────────────────────
+    if sig_ok:
+        ack = sign_recipient_ack(private_key, file_id, username)
+        session2 = SecureSession(username)
+        session2.connect()
+        session2.send("RECIPIENT_ACK", ack)
+        ack_response = session2.recv()
+        session2.close()
+        if ack_response and ack_response.get("type") == "ACK":
+            print(f"[OK] Signed acknowledgement sent to server.")
+            logger.info("Recipient ACK sent for file_id=%s by '%s'", file_id, username)
+        else:
+            logger.warning("ACK send failed for file_id=%s", file_id)
+
+    session.close()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -461,6 +536,8 @@ def main():
     p.add_argument("recipient")
     p.add_argument("filepath")
     p.add_argument("--expires", type=float, default=24, help="Expiration in hours (default 24)")
+    p.add_argument("--note", type=str, default=None, help="Encrypted note for recipient (Bonus 6)")
+    p.add_argument("--chunks", action="store_true", help="Force chunked upload (Bonus 4)")
 
     # list
     p = subparsers.add_parser("list", help="List pending files")
@@ -481,7 +558,8 @@ def main():
     if args.command == "register":
         cmd_register(args.username)
     elif args.command == "upload":
-        cmd_upload(args.username, args.recipient, args.filepath, args.expires)
+        cmd_upload(args.username, args.recipient, args.filepath, args.expires,
+                   note=args.note, use_chunks=args.chunks)
     elif args.command == "list":
         cmd_list(args.username)
     elif args.command == "download":
