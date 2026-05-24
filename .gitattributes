@@ -1,0 +1,16 @@
+# Normalize line endings to LF in the repo, convert to CRLF on Windows checkout
+* text=auto
+
+# Force LF for Python and config files
+*.py    text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.txt   text eol=lf
+*.json  text eol=lf
+
+# Binary files — no conversion
+*.pem   binary
+*.pyc   binary
+*.db    binary
+*.bin   binary
